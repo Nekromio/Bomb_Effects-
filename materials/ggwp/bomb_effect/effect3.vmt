@@ -1,0 +1,17 @@
+"UnlitGeneric"
+{
+	"$additive" "1"
+	"$translucent" 1
+	"$selfillum" 1
+	"$baseTexture" "ggwp/bomb_effect/effect3"
+
+	"Proxies"
+	{
+		"AnimatedTexture"
+		{
+			"animatedTextureVar" "$basetexture"
+			"animatedTextureFrameNumVar" "$frame"
+			"animatedTextureFrameRate" "26" 
+		}
+	}
+}

@@ -1,0 +1,16 @@
+"UnlitGeneric"
+{
+	"$additive" "1"
+	"$baseTexture" "ggwp/bomb_effect/effect9"
+	"$frame" "50"
+
+	"Proxies"
+	{
+		"AnimatedTexture"
+		{
+			"animatedTextureVar" "$basetexture"
+			"animatedTextureFrameNumVar" "$frame"
+			"animatedTextureFrameRate" "30" 
+		}
+	}
+}
