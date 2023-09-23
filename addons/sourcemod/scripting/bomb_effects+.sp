@@ -22,7 +22,7 @@ int
 	iBeamSprite,
 	iHaloSprite,
 	iBombTime,
-	iEffect[4],
+	iEntRef[4],
 	iLgtning,
 	iSteam1,
 	Engine_Version,
@@ -50,7 +50,7 @@ public Plugin myinfo =
 	name = "[Any] Bomb Effects+",
 	author = "Nek.'a 2x2 | ggwp.site",
 	description = "Эффект установленной бомбы и звуки",
-	version = "1.4.2",
+	version = "1.4.3",
 	url = "https://ggwp.site/"
 }
 
@@ -122,8 +122,8 @@ void Event_BombPlanted(Handle event, const char[] name, bool dontBroadcast)
 				return;
 			
 			float pos[3];
-			iEffect[0] = EntIndexToEntRef(index);
-			hTimerEffect = CreateTimer(1.0, TimerEffect, iEffect[0], TIMER_REPEAT|TIMER_FLAG_NO_MAPCHANGE);
+			iEntRef[0] = EntIndexToEntRef(index);
+			hTimerEffect = CreateTimer(1.0, Timer_Effect, iEntRef[0], TIMER_REPEAT|TIMER_FLAG_NO_MAPCHANGE);
 			GetEntPropVector(index, Prop_Data, "m_vecOrigin", pos, 0);
 			pos[2] += 20.0;
 			TeleportEntity(index, pos, NULL_VECTOR, NULL_VECTOR);
@@ -138,80 +138,93 @@ void Event_BombPlanted(Handle event, const char[] name, bool dontBroadcast)
 			startPos[0] = pos_[0] + GetRandomInt(-500, 500);
 			startPos[1] = pos_[1] + GetRandomInt(-500, 500);
 			startPos[2] = pos_[2] + 800;
-			int index;
-			if((index = FindEntityByClassname(-1, "planted_c4")) != -1)
+			int index  = FindEntityByClassname(-1, "planted_c4");
+			if(index == -1)
+				return;
+
+			iEntRef[1] = CreateEntityByName("point_tesla", -1);
+
+			if(iEntRef[1] == -1)
+				return;
+
+			float lastPos[3];
+			GetEntPropVector(index, Prop_Send, "m_vecOrigin", lastPos, 0);
+			DispatchKeyValueVector(iEntRef[1], "Origin", lastPos);
+			DispatchKeyValue(iEntRef[1], "m_flRadius", "50.0");
+			DispatchKeyValue(iEntRef[1], "m_SoundName", "DoSpark");
+			DispatchKeyValue(iEntRef[1], "beamcount_min", "42");
+			DispatchKeyValue(iEntRef[1], "beamcount_max", "62");
+			DispatchKeyValue(iEntRef[1], "texture", "sprites/physbeam.vmt");
+			DispatchKeyValue(iEntRef[1], "m_Color", "255 255 255");
+			DispatchKeyValue(iEntRef[1], "thick_min", "10.0");
+			DispatchKeyValue(iEntRef[1], "thick_max", "11.0");
+			DispatchKeyValue(iEntRef[1], "lifetime_min", "0.3");
+			DispatchKeyValue(iEntRef[1], "lifetime_max", "0.3");
+			DispatchKeyValue(iEntRef[1], "interval_min", "0.1");
+			DispatchKeyValue(iEntRef[1], "interval_max", "0.2");
+			DispatchSpawn(iEntRef[1]);
+			ActivateEntity(iEntRef[1]);
+			AcceptEntityInput(iEntRef[1], "DoSpark", -1, -1, 0);
+			AcceptEntityInput(iEntRef[1], "TurnOn", -1, -1, 0);
+			SetVariantString("OnUser1 !self:kill::5.0:1");
+			AcceptEntityInput(iEntRef[1], "AddOutput", -1, -1, 0);
+			AcceptEntityInput(iEntRef[1], "FireUser1", -1, -1, 0);
+
+			iEntRef[1] = EntIndexToEntRef(iEntRef[1]);
+
+			iEntRef[2] = CreateEntityByName("env_sprite", -1);
+			if (iEntRef[2] != -1)
 			{
-				iEffect[1] = CreateEntityByName("point_tesla", -1);
-				if (iEffect[1] != -1)
+				if(!bRndTo)
+					DispatchKeyValue(iEntRef[2], "model", "ggwp/bomb_effect/effect3.vmt");
+				else
+					DispatchKeyValue(iEntRef[2], "model", "ggwp/bomb_effect/effect9.vmt");
+
+				DispatchKeyValue(iEntRef[2], "rendermode", "1");
+				DispatchKeyValue(iEntRef[2], "spawnflags", "1");
+				DispatchKeyValue(iEntRef[2], "rendercolor", "0 0 0");
+				DispatchKeyValue(iEntRef[2], "renderfx", "0");
+				DispatchKeyValue(iEntRef[2], "renderamt", "255");
+				DispatchKeyValue(iEntRef[2], "scale", "0.7");
+				DispatchKeyValue(iEntRef[2], "GlowProxySize", "1");
+				DispatchSpawn(iEntRef[2]);
+				lastPos[2] += 85.0;
+				TeleportEntity(iEntRef[2], lastPos, NULL_VECTOR, NULL_VECTOR);
+				AcceptEntityInput(iEntRef[2], "ShowSprite", -1, -1, 0);
+
+				iEntRef[2] = EntIndexToEntRef(iEntRef[2]);
+
+				iEntRef[3] = CreateEntityByName("env_spark", -1);
+
+				if(iEntRef[3] != -1)
 				{
-					float lastPos[3];
 					GetEntPropVector(index, Prop_Send, "m_vecOrigin", lastPos, 0);
-					DispatchKeyValueVector(iEffect[1], "Origin", lastPos);
-					DispatchKeyValue(iEffect[1], "m_flRadius", "50.0");
-					DispatchKeyValue(iEffect[1], "m_SoundName", "DoSpark");
-					DispatchKeyValue(iEffect[1], "beamcount_min", "42");
-					DispatchKeyValue(iEffect[1], "beamcount_max", "62");
-					DispatchKeyValue(iEffect[1], "texture", "sprites/physbeam.vmt");
-					DispatchKeyValue(iEffect[1], "m_Color", "255 255 255");
-					DispatchKeyValue(iEffect[1], "thick_min", "10.0");
-					DispatchKeyValue(iEffect[1], "thick_max", "11.0");
-					DispatchKeyValue(iEffect[1], "lifetime_min", "0.3");
-					DispatchKeyValue(iEffect[1], "lifetime_max", "0.3");
-					DispatchKeyValue(iEffect[1], "interval_min", "0.1");
-					DispatchKeyValue(iEffect[1], "interval_max", "0.2");
-					DispatchSpawn(iEffect[1]);
-					ActivateEntity(iEffect[1]);
-					AcceptEntityInput(iEffect[1], "DoSpark", -1, -1, 0);
-					AcceptEntityInput(iEffect[1], "TurnOn", -1, -1, 0);
-					SetVariantString("OnUser1 !self:kill::5.0:1");
-					AcceptEntityInput(iEffect[1], "AddOutput", -1, -1, 0);
-					AcceptEntityInput(iEffect[1], "FireUser1", -1, -1, 0);
-					iEffect[2] = CreateEntityByName("env_sprite", -1);
-					if (iEffect[2] != -1)
-					{
-						if(!bRndTo) DispatchKeyValue(iEffect[2], "model", "ggwp/bomb_effect/effect3.vmt");
-						if(bRndTo) DispatchKeyValue(iEffect[2], "model", "ggwp/bomb_effect/effect9.vmt");
-						DispatchKeyValue(iEffect[2], "rendermode", "1");
-						DispatchKeyValue(iEffect[2], "spawnflags", "1");
-						DispatchKeyValue(iEffect[2], "rendercolor", "0 0 0");
-						DispatchKeyValue(iEffect[2], "renderfx", "0");
-						DispatchKeyValue(iEffect[2], "renderamt", "255");
-						DispatchKeyValue(iEffect[2], "scale", "0.7");
-						DispatchKeyValue(iEffect[2], "GlowProxySize", "1");
-						DispatchSpawn(iEffect[2]);
-						lastPos[2] += 85.0;
-						TeleportEntity(iEffect[2], lastPos, NULL_VECTOR, NULL_VECTOR);
-						AcceptEntityInput(iEffect[2], "ShowSprite", -1, -1, 0);
-						iEffect[3] = CreateEntityByName("env_spark", -1);
-						if (iEffect[3] != -1)
-						{
-							GetEntPropVector(index, Prop_Send, "m_vecOrigin", lastPos, 0);
-							DispatchKeyValueVector(iEffect[3], "Origin", lastPos);
-							DispatchKeyValue(iEffect[3], "spawnflags", "896");
-							DispatchKeyValue(iEffect[3], "angles", "-90 0 0");
-							DispatchKeyValue(iEffect[3], "magnitude", "8");
-							DispatchKeyValue(iEffect[3], "traillength", "5");
-							DispatchKeyValue(iEffect[3], "m_SoundName", "DoSpark");
-							DispatchSpawn(iEffect[3]);
-							ActivateEntity(iEffect[3]);
-							AcceptEntityInput(iEffect[3], "DoSpark", -1, -1, 0);
-							AcceptEntityInput(iEffect[3], "Enable", -1, -1, 0);
-							AcceptEntityInput(iEffect[3], "StartSpark", -1, -1, 0);
-							EmitAmbientSound("sound/ambient/machines/zap1.wav", lastPos, 0, 75, 0, 1.0, 100, 0.0);
-						}
-					}
-					TE_SetupBeamPoints(startPos, lastPos, iLgtning, 0, 0, 0, 0.2, 20.0, 10.0, 0, 2.0, color, 3);
-					TE_SendToAll();
-					TE_SetupBeamPoints(startPos, lastPos, iLgtning, 0, 0, 0, 0.2, 10.0, 5.0, 0, 1.0, {255, 255, 255, 255}, 3);
-					TE_SendToAll();
-					TE_SetupSparks(lastPos, direction, 5000, 1000);
-					TE_SendToAll();
-					TE_SetupEnergySplash(lastPos, direction, false);
-					TE_SendToAll();
-					TE_SetupSmoke(lastPos, iSteam1, 5.0, 10);
-					TE_SendToAll();
+					DispatchKeyValueVector(iEntRef[3], "Origin", lastPos);
+					DispatchKeyValue(iEntRef[3], "spawnflags", "896");
+					DispatchKeyValue(iEntRef[3], "angles", "-90 0 0");
+					DispatchKeyValue(iEntRef[3], "magnitude", "8");
+					DispatchKeyValue(iEntRef[3], "traillength", "5");
+					DispatchKeyValue(iEntRef[3], "m_SoundName", "DoSpark");
+					DispatchSpawn(iEntRef[3]);
+					ActivateEntity(iEntRef[3]);
+					AcceptEntityInput(iEntRef[3], "DoSpark", -1, -1, 0);
+					AcceptEntityInput(iEntRef[3], "Enable", -1, -1, 0);
+					AcceptEntityInput(iEntRef[3], "StartSpark", -1, -1, 0);
+					EmitAmbientSound("sound/ambient/machines/zap1.wav", lastPos, 0, 75, 0, 1.0, 100, 0.0);
+
+					iEntRef[3] = EntIndexToEntRef(iEntRef[3]);
 				}
 			}
+			TE_SetupBeamPoints(startPos, lastPos, iLgtning, 0, 0, 0, 0.2, 20.0, 10.0, 0, 2.0, color, 3);
+			TE_SendToAll();
+			TE_SetupBeamPoints(startPos, lastPos, iLgtning, 0, 0, 0, 0.2, 10.0, 5.0, 0, 1.0, {255, 255, 255, 255}, 3);
+			TE_SendToAll();
+			TE_SetupSparks(lastPos, direction, 5000, 1000);
+			TE_SendToAll();
+			TE_SetupEnergySplash(lastPos, direction, false);
+			TE_SendToAll();
+			TE_SetupSmoke(lastPos, iSteam1, 5.0, 10);
+			TE_SendToAll();
 		}
 	}
 }
@@ -225,75 +238,73 @@ void FunctionCircle(float pos[3])
 	color[3] = 255;
 	
 	float dir[3];
-	pos[2] += 10.0;
-	TE_SetupBeamRingPoint(pos, 50.0, 60.0, iHaloSprite, iBeamSprite, 0, 15, 1.0, 7.0, 2.0, color, 10, 0);
-	TE_SendToAll();
+	for(int i; i < 3; i++)
+	{
+		switch(i)
+		{
+			case 0: pos[2] += 10.0;
+			case 1: pos[2] -= 10.0;
+			case 2: pos[2] -= 10.0;
+		}
+		TE_SetupBeamRingPoint(pos, 50.0, 60.0, iHaloSprite, iBeamSprite, 0, 15, 1.0, 7.0, 2.0, color, 10, 0);
+		TE_SendToAll();
 
-	TE_SetupSparks(pos, dir, 5000, 1000);
-	TE_SendToAll();
-
-	pos[2] = pos[2] - 10.0;
-	TE_SetupBeamRingPoint(pos, 50.0, 60.0, iHaloSprite, iBeamSprite, 0, 15, 1.0, 7.0, 2.0, color, 10, 0);
-	TE_SendToAll();
-
-	TE_SetupSparks(pos, dir, 5000, 1000);
-	TE_SendToAll();
-
-	pos[2] = pos[2] - 10.0;
-	TE_SetupBeamRingPoint(pos, 50.0, 60.0, iHaloSprite, iBeamSprite, 0, 15, 1.0, 7.0, 2.0, color, 10, 0);
-	TE_SendToAll();
-
-	TE_SetupSparks(pos, dir, 5000, 1000);
-	TE_SendToAll();
+		TE_SetupSparks(pos, dir, 5000, 1000);
+		TE_SendToAll();
+	}
 	
 	if(!hTimerRing)
-		hTimerRing = CreateTimer(1.5, TimerRing);
+		hTimerRing = CreateTimer(1.5, Timer_Ring, _, TIMER_REPEAT|TIMER_FLAG_NO_MAPCHANGE);
 	if(!hTimerCircle)
-		hTimerCircle = CreateTimer(0.1, TimerCircle);
+		hTimerCircle = CreateTimer(0.1, Timer_Circle, _, TIMER_REPEAT|TIMER_FLAG_NO_MAPCHANGE);
 }
 
-Action TimerRing(Handle timer)
+Action Timer_Ring(Handle timer)
 {
 	if(iBombTime < 30)
 	{
 		iBombTime += 1;
 		float pos[3];
-		if(IsValidEntity(iEffect[0]))
-			GetEntPropVector(iEffect[0], Prop_Data, "m_vecOrigin", pos, 0);
+		if(IsValidEntity(iEntRef[0]))
+			GetEntPropVector(iEntRef[0], Prop_Data, "m_vecOrigin", pos, 0);
 		FunctionCircle(pos);
 	}
 	else
 	{
 		iBombTime = 0;
-		//if(hTimerRing) KillTimer(hTimerRing, false);
 	}
+
 	return Plugin_Continue;
 }
 
-Action TimerCircle(Handle timer)
+Action Timer_Circle(Handle timer)
 {
 	float pos[3];
-	if(IsValidEntity(iEffect[0]))
+	if(IsValidEntity(iEntRef[0]))
 	{
-		GetEntPropVector(iEffect[0], Prop_Data, "m_angRotation", pos, 0);
+		GetEntPropVector(iEntRef[0], Prop_Data, "m_angRotation", pos, 0);
 		pos[1] += 10.0;
-		TeleportEntity(iEffect[0], NULL_VECTOR, pos, NULL_VECTOR);
+		TeleportEntity(iEntRef[0], NULL_VECTOR, pos, NULL_VECTOR);
 	}
+	hTimerRing = null;
 	return Plugin_Continue;
 }
 
-Action TimerEffect(Handle timer, any iClient)
+Action Timer_Effect(Handle timer, int iRef)
 {
 	bool bRndOneT = view_as<bool>(GetRandomInt(0, 1));
-	int c4 = EntRefToEntIndex(iClient);
+	int iEnt = EntRefToEntIndex(iRef);
 	float pos[3]; int color[4];
-	if(c4 == -1 || !IsValidEntity(c4))
+	if(!IsValidEntity(iEnt))
 		return Plugin_Stop;
 	
 	if(!bRndOneT)
 	{
-		GetEntPropVector(c4, Prop_Send, "m_vecOrigin", pos);
-		color[0] = GetRandomInt(0, 255); color[1] = GetRandomInt(0, 255); color[2] = GetRandomInt(0, 255); color[3] = 255;
+		GetEntPropVector(iEnt, Prop_Send, "m_vecOrigin", pos);
+		color[0] = GetRandomInt(0, 255);
+		color[1] = GetRandomInt(0, 255);
+		color[2] = GetRandomInt(0, 255);
+		color[3] = 255;
 		pos[2] += 10.0;
 		TE_SetupBeamRingPoint(pos, 50.0, 60.0, iHaloSprite, iBeamSprite, 0, 15, 5.0, 7.0, 9.0, color, 10, 9);
 		TE_SendToAll();
@@ -302,11 +313,13 @@ Action TimerEffect(Handle timer, any iClient)
 		TE_SetupSparks(pos, view_as<float>({0.0, 0.0, 0.0}), 5000, 1000);
 		TE_SendToAll();	
 	}
-	
-	if(bRndOneT)
+	else
 	{
-		GetEntPropVector(c4, Prop_Send, "m_vecOrigin", pos);
-		color[0] = 0; color[1] = 51; color[2] = 0; color[3] = 255;
+		GetEntPropVector(iEnt, Prop_Send, "m_vecOrigin", pos);
+		color[0] = 0;
+		color[1] = 51;
+		color[2] = 0;
+		color[3] = 255;
 		pos[2] += 20.0;
 		TE_SetupBeamRingPoint(pos, 50.0, 60.0, iHaloSprite, iBeamSprite, 0, 15, 5.0, 7.0, 9.0, color, 10, 9);
 		TE_SendToAll();
@@ -334,14 +347,17 @@ Action TimerEffect(Handle timer, any iClient)
 
 void Event_RoundEnd(Event event, char[] name, bool dontBroadcast)
 {
-	for(int i = 0; i < 4; i++)
+	int index;
+	for(int i = 0; i < 4; i++) if(iEntRef[i])
 	{
-		AcceptEntityInput(EntIndexToEntRef(iEffect[i]), "Kill");
+		index = EntRefToEntIndex(iEntRef[i]);
+		if(index == INVALID_ENT_REFERENCE || !IsValidEntity(index))
+			continue;
+		AcceptEntityInput(index, "Kill");
 	}
 
 	if(hTimerRing)
 		delete hTimerRing;
-	
 	if(hTimerCircle)
 		delete hTimerCircle;
 }
