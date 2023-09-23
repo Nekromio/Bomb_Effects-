@@ -21,14 +21,10 @@ Handle
 int
 	iBeamSprite,
 	iHaloSprite,
-	iIndex,
 	iBombTime,
-	iBall,
-	iBall_2,
-	iBall_3,
+	iEffect[4],
 	iLgtning,
 	iSteam1,
-	iEffect,
 	Engine_Version,
 	game[4] = {0,1,2,3};		//0-UNDEFINED|1-css34|2-css|3-csgo
 
@@ -54,7 +50,7 @@ public Plugin myinfo =
 	name = "[Any] Bomb Effects+",
 	author = "Nek.'a 2x2 | ggwp.site",
 	description = "Эффект установленной бомбы и звуки",
-	version = "1.4.1",
+	version = "1.4.2",
 	url = "https://ggwp.site/"
 }
 
@@ -72,8 +68,7 @@ public void OnPluginStart()
 		cvSound = CreateConVar("sm_bombeffect_sound", "bomb/bombpl.wav", "Путь к звуку");
 	
 	HookEvent("bomb_planted", Event_BombPlanted);
-	HookEvent("round_end", EventKill);
-	HookEvent("round_start", EventKill);
+	HookEvent("round_end", Event_RoundEnd);
 }
 
 public void OnMapStart()
@@ -122,16 +117,16 @@ void Event_BombPlanted(Handle event, const char[] name, bool dontBroadcast)
 	{
 		case false:
 		{
-			iIndex = FindEntityByClassname(MaxClients + 1, "planted_c4");
-			if(iIndex == -1)
+			int index = FindEntityByClassname(MaxClients + 1, "planted_c4");
+			if(index == -1)
 				return;
 			
 			float pos[3];
-			iEffect = EntIndexToEntRef(iIndex);
-			hTimerEffect = CreateTimer(1.0, TimerEffect, iEffect, TIMER_REPEAT|TIMER_FLAG_NO_MAPCHANGE);
-			GetEntPropVector(iIndex, Prop_Data, "m_vecOrigin", pos, 0);
+			iEffect[0] = EntIndexToEntRef(index);
+			hTimerEffect = CreateTimer(1.0, TimerEffect, iEffect[0], TIMER_REPEAT|TIMER_FLAG_NO_MAPCHANGE);
+			GetEntPropVector(index, Prop_Data, "m_vecOrigin", pos, 0);
 			pos[2] += 20.0;
-			TeleportEntity(iIndex, pos, NULL_VECTOR, NULL_VECTOR);
+			TeleportEntity(index, pos, NULL_VECTOR, NULL_VECTOR);
 			FunctionCircle(pos);
 		}
 	
@@ -143,65 +138,65 @@ void Event_BombPlanted(Handle event, const char[] name, bool dontBroadcast)
 			startPos[0] = pos_[0] + GetRandomInt(-500, 500);
 			startPos[1] = pos_[1] + GetRandomInt(-500, 500);
 			startPos[2] = pos_[2] + 800;
-			
-			if((iIndex = FindEntityByClassname(-1, "planted_c4")) != -1)
+			int index;
+			if((index = FindEntityByClassname(-1, "planted_c4")) != -1)
 			{
-				iBall = CreateEntityByName("point_tesla", -1);
-				if (iBall != -1)
+				iEffect[1] = CreateEntityByName("point_tesla", -1);
+				if (iEffect[1] != -1)
 				{
 					float lastPos[3];
-					GetEntPropVector(iIndex, Prop_Send, "m_vecOrigin", lastPos, 0);
-					DispatchKeyValueVector(iBall, "Origin", lastPos);
-					DispatchKeyValue(iBall, "m_flRadius", "50.0");
-					DispatchKeyValue(iBall, "m_SoundName", "DoSpark");
-					DispatchKeyValue(iBall, "beamcount_min", "42");
-					DispatchKeyValue(iBall, "beamcount_max", "62");
-					DispatchKeyValue(iBall, "texture", "sprites/physbeam.vmt");
-					DispatchKeyValue(iBall, "m_Color", "255 255 255");
-					DispatchKeyValue(iBall, "thick_min", "10.0");
-					DispatchKeyValue(iBall, "thick_max", "11.0");
-					DispatchKeyValue(iBall, "lifetime_min", "0.3");
-					DispatchKeyValue(iBall, "lifetime_max", "0.3");
-					DispatchKeyValue(iBall, "interval_min", "0.1");
-					DispatchKeyValue(iBall, "interval_max", "0.2");
-					DispatchSpawn(iBall);
-					ActivateEntity(iBall);
-					AcceptEntityInput(iBall, "DoSpark", -1, -1, 0);
-					AcceptEntityInput(iBall, "TurnOn", -1, -1, 0);
+					GetEntPropVector(index, Prop_Send, "m_vecOrigin", lastPos, 0);
+					DispatchKeyValueVector(iEffect[1], "Origin", lastPos);
+					DispatchKeyValue(iEffect[1], "m_flRadius", "50.0");
+					DispatchKeyValue(iEffect[1], "m_SoundName", "DoSpark");
+					DispatchKeyValue(iEffect[1], "beamcount_min", "42");
+					DispatchKeyValue(iEffect[1], "beamcount_max", "62");
+					DispatchKeyValue(iEffect[1], "texture", "sprites/physbeam.vmt");
+					DispatchKeyValue(iEffect[1], "m_Color", "255 255 255");
+					DispatchKeyValue(iEffect[1], "thick_min", "10.0");
+					DispatchKeyValue(iEffect[1], "thick_max", "11.0");
+					DispatchKeyValue(iEffect[1], "lifetime_min", "0.3");
+					DispatchKeyValue(iEffect[1], "lifetime_max", "0.3");
+					DispatchKeyValue(iEffect[1], "interval_min", "0.1");
+					DispatchKeyValue(iEffect[1], "interval_max", "0.2");
+					DispatchSpawn(iEffect[1]);
+					ActivateEntity(iEffect[1]);
+					AcceptEntityInput(iEffect[1], "DoSpark", -1, -1, 0);
+					AcceptEntityInput(iEffect[1], "TurnOn", -1, -1, 0);
 					SetVariantString("OnUser1 !self:kill::5.0:1");
-					AcceptEntityInput(iBall, "AddOutput", -1, -1, 0);
-					AcceptEntityInput(iBall, "FireUser1", -1, -1, 0);
-					iBall_2 = CreateEntityByName("env_sprite", -1);
-					if (iBall_2 != -1)
+					AcceptEntityInput(iEffect[1], "AddOutput", -1, -1, 0);
+					AcceptEntityInput(iEffect[1], "FireUser1", -1, -1, 0);
+					iEffect[2] = CreateEntityByName("env_sprite", -1);
+					if (iEffect[2] != -1)
 					{
-						if(!bRndTo) DispatchKeyValue(iBall_2, "model", "ggwp/bomb_effect/effect3.vmt");
-						if(bRndTo) DispatchKeyValue(iBall_2, "model", "ggwp/bomb_effect/effect9.vmt");
-						DispatchKeyValue(iBall_2, "rendermode", "1");
-						DispatchKeyValue(iBall_2, "spawnflags", "1");
-						DispatchKeyValue(iBall_2, "rendercolor", "0 0 0");
-						DispatchKeyValue(iBall_2, "renderfx", "0");
-						DispatchKeyValue(iBall_2, "renderamt", "255");
-						DispatchKeyValue(iBall_2, "scale", "0.7");
-						DispatchKeyValue(iBall_2, "GlowProxySize", "1");
-						DispatchSpawn(iBall_2);
+						if(!bRndTo) DispatchKeyValue(iEffect[2], "model", "ggwp/bomb_effect/effect3.vmt");
+						if(bRndTo) DispatchKeyValue(iEffect[2], "model", "ggwp/bomb_effect/effect9.vmt");
+						DispatchKeyValue(iEffect[2], "rendermode", "1");
+						DispatchKeyValue(iEffect[2], "spawnflags", "1");
+						DispatchKeyValue(iEffect[2], "rendercolor", "0 0 0");
+						DispatchKeyValue(iEffect[2], "renderfx", "0");
+						DispatchKeyValue(iEffect[2], "renderamt", "255");
+						DispatchKeyValue(iEffect[2], "scale", "0.7");
+						DispatchKeyValue(iEffect[2], "GlowProxySize", "1");
+						DispatchSpawn(iEffect[2]);
 						lastPos[2] += 85.0;
-						TeleportEntity(iBall_2, lastPos, NULL_VECTOR, NULL_VECTOR);
-						AcceptEntityInput(iBall_2, "ShowSprite", -1, -1, 0);
-						iBall_3 = CreateEntityByName("env_spark", -1);
-						if (iBall_3 != -1)
+						TeleportEntity(iEffect[2], lastPos, NULL_VECTOR, NULL_VECTOR);
+						AcceptEntityInput(iEffect[2], "ShowSprite", -1, -1, 0);
+						iEffect[3] = CreateEntityByName("env_spark", -1);
+						if (iEffect[3] != -1)
 						{
-							GetEntPropVector(iIndex, Prop_Send, "m_vecOrigin", lastPos, 0);
-							DispatchKeyValueVector(iBall_3, "Origin", lastPos);
-							DispatchKeyValue(iBall_3, "spawnflags", "896");
-							DispatchKeyValue(iBall_3, "angles", "-90 0 0");
-							DispatchKeyValue(iBall_3, "magnitude", "8");
-							DispatchKeyValue(iBall_3, "traillength", "5");
-							DispatchKeyValue(iBall_3, "m_SoundName", "DoSpark");
-							DispatchSpawn(iBall_3);
-							ActivateEntity(iBall_3);
-							AcceptEntityInput(iBall_3, "DoSpark", -1, -1, 0);
-							AcceptEntityInput(iBall_3, "Enable", -1, -1, 0);
-							AcceptEntityInput(iBall_3, "StartSpark", -1, -1, 0);
+							GetEntPropVector(index, Prop_Send, "m_vecOrigin", lastPos, 0);
+							DispatchKeyValueVector(iEffect[3], "Origin", lastPos);
+							DispatchKeyValue(iEffect[3], "spawnflags", "896");
+							DispatchKeyValue(iEffect[3], "angles", "-90 0 0");
+							DispatchKeyValue(iEffect[3], "magnitude", "8");
+							DispatchKeyValue(iEffect[3], "traillength", "5");
+							DispatchKeyValue(iEffect[3], "m_SoundName", "DoSpark");
+							DispatchSpawn(iEffect[3]);
+							ActivateEntity(iEffect[3]);
+							AcceptEntityInput(iEffect[3], "DoSpark", -1, -1, 0);
+							AcceptEntityInput(iEffect[3], "Enable", -1, -1, 0);
+							AcceptEntityInput(iEffect[3], "StartSpark", -1, -1, 0);
 							EmitAmbientSound("sound/ambient/machines/zap1.wav", lastPos, 0, 75, 0, 1.0, 100, 0.0);
 						}
 					}
@@ -233,23 +228,28 @@ void FunctionCircle(float pos[3])
 	pos[2] += 10.0;
 	TE_SetupBeamRingPoint(pos, 50.0, 60.0, iHaloSprite, iBeamSprite, 0, 15, 1.0, 7.0, 2.0, color, 10, 0);
 	TE_SendToAll();
+
 	TE_SetupSparks(pos, dir, 5000, 1000);
 	TE_SendToAll();
+
 	pos[2] = pos[2] - 10.0;
 	TE_SetupBeamRingPoint(pos, 50.0, 60.0, iHaloSprite, iBeamSprite, 0, 15, 1.0, 7.0, 2.0, color, 10, 0);
 	TE_SendToAll();
+
 	TE_SetupSparks(pos, dir, 5000, 1000);
 	TE_SendToAll();
+
 	pos[2] = pos[2] - 10.0;
 	TE_SetupBeamRingPoint(pos, 50.0, 60.0, iHaloSprite, iBeamSprite, 0, 15, 1.0, 7.0, 2.0, color, 10, 0);
 	TE_SendToAll();
+
 	TE_SetupSparks(pos, dir, 5000, 1000);
 	TE_SendToAll();
 	
 	if(!hTimerRing)
-		hTimerRing = CreateTimer(1.5, TimerRing, 0, 1);
+		hTimerRing = CreateTimer(1.5, TimerRing);
 	if(!hTimerCircle)
-		hTimerCircle = CreateTimer(0.1, TimerCircle, 0, 1);
+		hTimerCircle = CreateTimer(0.1, TimerCircle);
 }
 
 Action TimerRing(Handle timer)
@@ -258,8 +258,8 @@ Action TimerRing(Handle timer)
 	{
 		iBombTime += 1;
 		float pos[3];
-		if(IsValidEntity(iIndex))
-		GetEntPropVector(iIndex, Prop_Data, "m_vecOrigin", pos, 0);
+		if(IsValidEntity(iEffect[0]))
+			GetEntPropVector(iEffect[0], Prop_Data, "m_vecOrigin", pos, 0);
 		FunctionCircle(pos);
 	}
 	else
@@ -273,11 +273,11 @@ Action TimerRing(Handle timer)
 Action TimerCircle(Handle timer)
 {
 	float pos[3];
-	if(IsValidEntity(iIndex))
+	if(IsValidEntity(iEffect[0]))
 	{
-		GetEntPropVector(iIndex, Prop_Data, "m_angRotation", pos, 0);
+		GetEntPropVector(iEffect[0], Prop_Data, "m_angRotation", pos, 0);
 		pos[1] += 10.0;
-		TeleportEntity(iIndex, NULL_VECTOR, pos, NULL_VECTOR);
+		TeleportEntity(iEffect[0], NULL_VECTOR, pos, NULL_VECTOR);
 	}
 	return Plugin_Continue;
 }
@@ -332,41 +332,16 @@ Action TimerEffect(Handle timer, any iClient)
 	return Plugin_Continue;
 }
 
-void EventKill(Handle event, char[] name, bool dontBroadcast)
+void Event_RoundEnd(Event event, char[] name, bool dontBroadcast)
 {
-	KillEntity(GetEventInt(event, "userid"));
-}
+	for(int i = 0; i < 4; i++)
+	{
+		AcceptEntityInput(EntIndexToEntRef(iEffect[i]), "Kill");
+	}
 
-stock void KillEntity(int client, const bool bTimer = false)
-{
-	if(iIndex && IsValidEntity(iIndex))
-	{
-		AcceptEntityInput(iIndex, "Kill");
-		//PrintToChatAll("Сущность убита");
-	}
+	if(hTimerRing)
+		delete hTimerRing;
 	
-	if(iBall && IsValidEntity(iBall))
-	{
-		//PrintToChatAll("Еффект %d iBall убит", iBall);
-		AcceptEntityInput(iBall, "Kill");
-	}
-	if(iBall_2 && IsValidEntity(iBall_2))
-	{
-		//PrintToChatAll("Еффект %d iBall_2 убит", iBall_2);
-		AcceptEntityInput(iBall_2, "Kill");
-	}
-	if(iBall_3 && IsValidEntity(iBall_3))
-	{
-		//PrintToChatAll("Еффект %d iBall_3 убит", iBall_3);
-		AcceptEntityInput(iBall_3, "Kill");
-	}
-	
-	if(bTimer) hTimerRing = null;
-	else if(hTimerRing) delete hTimerRing;
-	
-	if(bTimer) hTimerCircle = null;
-	else if(hTimerCircle) delete hTimerCircle;
-	
-	//if(bTimer) hTimerEffect = null;
-	//else if(hTimerEffect) delete hTimerEffect;
+	if(hTimerCircle)
+		delete hTimerCircle;
 }
